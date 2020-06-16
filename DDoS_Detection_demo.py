@@ -3,10 +3,7 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM #CuDNNLSTM
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
 import csv
 
 class color:
@@ -21,10 +18,10 @@ class color:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
-print(color.BOLD + 'Hello World !' + color.END)
+# print(color.BOLD + 'Hello World !' + color.END)
 
 df = pd.read_csv("attack_test.csv")
-df.info()
+# df.info()
 with open("attack_test.csv", newline='') as f:
     reader = csv.reader(f)
     origin_X_test = list(reader)
@@ -59,13 +56,25 @@ y_test = y_test.reshape((y_test.shape[0],1,1))
 
 model = tf.keras.models.load_model("LSTM_DDoS_Detection.model")
 # CATEGORIES = ["",""]
+
+N = int(input("\n"+color.GREEN+"How many packets do you want to check? We have "+ color.RED + str(len(df)) + color.GREEN + " packets you can check: "+color.END))
+count_ddos = 0
+
+count_normal = 0
 for i, each in enumerate(X_test):
-    each = each.reshape((each.shape[0],1,each.shape[1]))
-    prediction = model.predict([each])
-    scale_pred = prediction[0][0][0]
-    if scale_pred >= 0.5:
-        print(origin_X_test[i+2])
-        print(color.RED + "DDoS Packet found." + color.END)
-    elif scale_pred < 0.5:
-        print(origin_X_test[i+2])
-        print(color.GREEN + "This packet is a normal Packet." + color.END)
+    if i < N:
+        each = each.reshape((each.shape[0],1,each.shape[1]))
+        prediction = model.predict([each])
+        scale_pred = prediction[0][0][0]
+        if scale_pred >= 0.5:
+            print(color.RED + "DDoS Packet found." + color.END )
+            print(color.PURPLE + "Packet: "  + color.END + str(origin_X_test[i+2])+"\n")
+            count_ddos += 1
+        elif scale_pred < 0.5:
+            print(color.GREEN + "This packet is a normal Packet." + color.END)
+            print(color.PURPLE + "Packet: " + color.END + str(origin_X_test[i+2])+"\n")
+            count_normal += 1
+    else:
+        print(color.YELLOW + str(count_normal) + color.GREEN + " Normal Packets Found." + color.END+"\n")
+        print(color.YELLOW + str(count_ddos) + color.RED + " DDoS Packets Found." + color.END+"\n")
+        break
